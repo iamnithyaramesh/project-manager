@@ -1,0 +1,114 @@
+.navbar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 100vh;
+  width: 250px;
+  background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+}
+
+.navbar-header {
+  padding: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.navbar-header h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.navbar-menu {
+  list-style: none;
+  flex: 1;
+  padding: 20px 0;
+  overflow-y: auto;
+}
+
+.navbar-menu li {
+  margin: 5px 0;
+}
+
+.navbar-menu a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  color: rgba(255, 255, 255, 0.8);
+  text-decoration: none;
+  transition: all 0.3s;
+  font-size: 0.95rem;
+}
+
+.navbar-menu a:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.navbar-menu a.active {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border-left: 3px solid white;
+}
+
+.navbar-menu a svg {
+  font-size: 1.2rem;
+}
+
+.navbar-footer {
+  padding: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.user-info {
+  margin-bottom: 15px;
+}
+
+.user-info span {
+  display: block;
+  font-size: 0.9rem;
+}
+
+.user-role {
+  font-size: 0.75rem !important;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: capitalize;
+}
+
+.logout-btn {
+  width: 100%;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.3s;
+}
+
+.logout-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+@media (max-width: 768px) {
+  .navbar {
+    transform: translateX(-100%);
+    transition: transform 0.3s;
+  }
+  
+  .navbar.open {
+    transform: translateX(0);
+  }
+}
+
+
+
+
