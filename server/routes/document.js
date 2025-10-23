@@ -161,8 +161,9 @@ router.post('/upload', auth, (req, res, next) => {
     const filePath = req.file.path;
     const originalName = req.file.originalname;
     const fileExt = path.extname(originalName).toLowerCase();
+    const fileType = fileExt.substring(1); // Remove the dot from extension
     
-    console.log('File details:', { filePath, originalName, fileExt });
+    console.log('File details:', { filePath, originalName, fileExt, fileType });
     
     let extractedText = '';
 
@@ -170,9 +171,16 @@ router.post('/upload', auth, (req, res, next) => {
       if (fileExt === '.pdf') {
         console.log('Processing PDF file...');
         const data = await fs.promises.readFile(filePath);
-        const parsed = await pdf(data);
-        extractedText = parsed.text || '';
-        console.log('PDF parsed successfully, text length:', extractedText.length);
+        
+        try {
+          const parsed = await pdf(data);
+          extractedText = parsed.text || '';
+          console.log('PDF parsed successfully, text length:', extractedText.length);
+        } catch (pdfError) {
+          console.error('PDF parsing failed:', pdfError.message);
+          console.log('PDF appears to be corrupted or has encoding issues. Skipping fallback text parsing.');
+          throw new Error('Unable to parse PDF file. The file may be corrupted, password-protected, or have unsupported encoding. Please try a different PDF file or convert it to a text file.');
+        }
       } else if (fileExt === '.docx') {
         const result = await mammoth.extractRawText({ path: filePath });
         extractedText = result.value || '';
@@ -183,7 +191,22 @@ router.post('/upload', auth, (req, res, next) => {
       }
     } catch (parseError) {
       console.error('Parse error:', parseError);
-      return res.status(500).json({ message: 'Failed to parse file content' });
+      console.error('Parse error details:', parseError.message);
+      
+      // Provide more specific error messages
+      let errorMessage = 'Failed to parse file content';
+      if (parseError.message.includes('Invalid number')) {
+        errorMessage = 'The PDF file appears to be corrupted or has an unsupported format. Please try a different PDF file.';
+      } else if (parseError.message.includes('password')) {
+        errorMessage = 'The PDF file is password-protected. Please provide an unprotected PDF file.';
+      } else if (parseError.message.includes('Invalid PDF')) {
+        errorMessage = 'The file is not a valid PDF or is corrupted. Please check the file and try again.';
+      }
+      
+      return res.status(500).json({ 
+        message: errorMessage,
+        details: parseError.message 
+      });
     } finally {
       // Clean up uploaded file
       try {
@@ -198,6 +221,33 @@ router.post('/upload', auth, (req, res, next) => {
       .replace(/\r/g, '')
       .replace(/\n{3,}/g, '\n\n')
       .trim();
+    
+    // Filter out PDF metadata and structure if present
+    if (extractedText.includes('%PDF-') || extractedText.includes('obj') || extractedText.includes('endobj')) {
+      console.log('Detected PDF structure in text - filtering out metadata');
+      extractedText = extractedText
+        .replace(/%PDF-.*?\n/g, '')
+        .replace(/\d+\s+\d+\s+obj.*?endobj/gs, '')
+        .replace(/xref.*?startxref/gs, '')
+        .replace(/trailer.*?%%EOF/gs, '')
+        .replace(/stream.*?endstream/gs, '')
+        .replace(/<<.*?>>/gs, '')
+        .replace(/\/[A-Za-z]+\s+\d+/g, '')
+        .replace(/\[.*?\]/g, '')
+        .replace(/\(.*?\)/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+    
+    // Check if we have valid text content
+    if (!extractedText || extractedText.length < 10) {
+      console.log('No meaningful text extracted from file');
+      return res.status(400).json({ 
+        message: 'No readable text found in the uploaded file. Please ensure the file contains text content.' 
+      });
+    }
+    
+    console.log('Text processing completed, final length:', extractedText.length);
 
     // Extract requirements
     const requirements = extractRequirements(extractedText);
@@ -212,7 +262,7 @@ router.post('/upload', auth, (req, res, next) => {
       filename: originalName,
       originalName: originalName,
       fileSize: req.file.size,
-      fileType: fileExt,
+      fileType: fileType, // Use fileType without dot
       extractedText: extractedText,
       textLength: extractedText.length,
       requirements: requirements,
@@ -228,6 +278,7 @@ router.post('/upload', auth, (req, res, next) => {
     });
 
     await document.save();
+    console.log('Document saved successfully:', document._id);
 
     res.json({
       id: document._id,

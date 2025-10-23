@@ -40,6 +40,7 @@ const Projects = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      console.log('Submitting project:', formData);
       const token = localStorage.getItem('token') || 'mock-token';
       const headers = {
         'Authorization': `Bearer ${token}`,
@@ -47,17 +48,23 @@ const Projects = () => {
       };
       
       if (editingProject) {
-        await axios.put(`http://localhost:5000/api/projects/${editingProject._id}`, formData, { headers });
+        console.log('Updating project:', editingProject._id);
+        const response = await axios.put(`http://localhost:5000/api/projects/${editingProject._id}`, formData, { headers });
+        console.log('Update response:', response.data);
       } else {
-        await axios.post('http://localhost:5000/api/projects', formData, { headers });
+        console.log('Creating new project');
+        const response = await axios.post('http://localhost:5000/api/projects', formData, { headers });
+        console.log('Create response:', response.data);
       }
+      
       setShowModal(false);
       setEditingProject(null);
       setFormData({ name: '', description: '', priority: 'medium', status: 'planning' });
       fetchProjects();
     } catch (error) {
       console.error('Error saving project:', error);
-      alert('Failed to save project. Please check console for details.');
+      console.error('Error response:', error.response?.data);
+      alert(`Failed to save project: ${error.response?.data?.message || error.message}`);
     }
   };
 

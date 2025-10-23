@@ -92,6 +92,7 @@ router.post('/', auth, async (req, res) => {
 router.put('/:id', auth, async (req, res) => {
   try {
     console.log('Updating project:', req.params.id, 'with data:', req.body);
+    console.log('User ID:', req.user.id);
     
     const project = await Project.findById(req.params.id);
     
@@ -100,9 +101,13 @@ router.put('/:id', auth, async (req, res) => {
       return res.status(404).json({ message: 'Project not found' });
     }
 
+    console.log('Found project:', project.name, 'Created by:', project.createdBy);
+
     // Check if user has permission to update this project
     const hasAccess = project.createdBy.toString() === req.user.id || 
-                     project.teamMembers.some(member => member.userId.toString() === req.user.id);
+                     (project.teamMembers && project.teamMembers.some(member => member.userId.toString() === req.user.id));
+    
+    console.log('Has access:', hasAccess);
     
     if (!hasAccess) {
       console.log('Access denied for user:', req.user.id);
@@ -113,6 +118,7 @@ router.put('/:id', auth, async (req, res) => {
     Object.keys(req.body).forEach(key => {
       if (req.body[key] !== undefined) {
         project[key] = req.body[key];
+        console.log(`Updated ${key}:`, req.body[key]);
       }
     });
     
@@ -127,6 +133,7 @@ router.put('/:id', auth, async (req, res) => {
       .populate('clientId', 'name email')
       .populate('teamMembers.userId', 'name email role skills');
     
+    console.log('Returning updated project:', updatedProject.name);
     res.json(updatedProject);
   } catch (error) {
     console.error('Error updating project:', error);

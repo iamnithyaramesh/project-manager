@@ -65,7 +65,8 @@ const Documents = () => {
       setTimeout(() => setShowSuccess(false), 3000);
     } catch (error) {
       console.error('Error uploading file:', error);
-      alert('Failed to upload file');
+      console.error('Error response:', error.response?.data);
+      alert(`Failed to upload file: ${error.response?.data?.message || error.message}`);
     } finally {
       setLoading(false);
     }
