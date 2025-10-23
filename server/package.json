@@ -1,5 +1,5 @@
 {
-  "name": "project-manager-server",
+  "name": "proj-space-doc-parser",
   "version": "1.0.0",
   "description": "Backend server for project management system",
   "main": "index.js",
@@ -8,24 +8,25 @@
     "dev": "nodemon index.js"
   },
   "dependencies": {
-    "express": "^4.18.2",
-    "mongoose": "^8.0.3",
-    "cors": "^2.8.5",
-    "dotenv": "^16.3.1",
-    "bcryptjs": "^2.4.3",
-    "jsonwebtoken": "^9.0.2",
-    "multer": "^1.4.5-lts.1",
-    "pdf-parse": "^1.1.1",
-    "mammoth": "^1.6.0",
-    "googleapis": "^129.0.0",
     "axios": "^1.6.2",
+    "bcryptjs": "^2.4.3",
+    "body-parser": "^2.2.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^4.18.2",
+    "googleapis": "^129.0.0",
+    "imap": "^0.8.19",
+    "jsonwebtoken": "^9.0.2",
+    "mailparser": "^3.7.5",
+    "mammoth": "^1.4.21",
+    "mongodb": "^6.20.0",
+    "mongoose": "^8.19.2",
+    "multer": "^1.4.5-lts.1",
+    "nodemailer": "^6.10.1",
     "openai": "^4.20.1",
-    "nodemailer": "^6.9.7"
+    "pdf-parse": "^1.1.1"
   },
   "devDependencies": {
-    "nodemon": "^3.0.2"
+    "nodemon": "^2.0.22"
   }
 }
-
-
-
