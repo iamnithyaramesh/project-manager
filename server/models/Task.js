@@ -31,10 +31,9 @@ const taskSchema = new mongoose.Schema({
     enum: ['low', 'medium', 'high', 'critical'],
     default: 'medium'
   },
-  aiPriorityScore: {
-    type: Number,
-    default: 0
-  },
+  aiPriorityScore: { type: Number, default: null, index: true },
+  aiPriorityReason: { type: String, default: null },
+  aiPriorityAt: { type: Date, default: null },
   estimatedHours: {
     type: Number
   },
@@ -54,9 +53,11 @@ const taskSchema = new mongoose.Schema({
   skillsRequired: [{
     type: String
   }],
-  jiraIssueKey: {
-    type: String
-  },
+  // --- added fields for Jira integration ---
+  jiraIssueKey: { type: String, index: true, default: null },
+  jiraUrl: { type: String, default: null },
+  jiraSyncedAt: { type: Date, default: null },
+  // --- end added fields ---
   tags: [{
     type: String
   }],
@@ -72,16 +73,20 @@ const taskSchema = new mongoose.Schema({
     }
   }],
   createdAt: {
+  },type: Date,
+  updatedAt: {ate.now
     type: Date,
     default: Date.now
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now
+  } type: Date,
+}); default: Date.now
   }
-});
+module.exports = mongoose.model('Task', taskSchema);
 
 module.exports = mongoose.model('Task', taskSchema);
+
+GEMINI_PROVIDER=google
+GEMINI_KEY=your_gemini_api_key_here
+GEMINI_MODEL=text-bison-001
 
 
 

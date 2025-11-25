@@ -21,9 +21,9 @@ const auth = async (req, res, next) => {
       if (!demoUser) {
         console.log('Creating new demo user');
         demoUser = new User({
-          name: 'Demo User',
-          email: 'demo@example.com',
-          password: 'demo123',
+          name: 'Admin Login',
+          email: 'admin@example.com',
+          password: 'admin123',
           role: 'admin'
         });
         await demoUser.save();

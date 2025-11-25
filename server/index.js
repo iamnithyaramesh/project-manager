@@ -1,7 +1,7 @@
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const dotenv = require('dotenv');
 const multer = require('multer');
 const pdf = require('pdf-parse');
 const mammoth = require('mammoth');
@@ -9,7 +9,8 @@ const fs = require('fs').promises;
 const path = require('path');
 const os = require('os');
 
-dotenv.config();
+const jiraRoutes = require('./routes/jira'); // <-- added
+const tasksAiRoutes = require('./routes/tasksAi'); // <-- add this near other routes
 
 const app = express();
 
@@ -40,6 +41,14 @@ app.use('/api/projects', require('./routes/projects'));
 app.use('/api/tasks', require('./routes/tasks'));
 app.use('/api/employees', require('./routes/employees'));
 app.use('/api/document', require('./routes/document'));
+
+// --- mount jira routes ---
+app.use('/api/jira', jiraRoutes);
+// --- end added ---
+
+// --- mount tasks AI routes ---
+// app.use('/api/tasks', tasksAiRoutes);
+// --- end added ---
 
 // MongoDB connection
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/project-manager')
