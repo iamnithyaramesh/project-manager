@@ -15,6 +15,7 @@ const Dashboard = () => {
     inProgressTasks: 0
   });
   const [recentTasks, setRecentTasks] = useState([]);
+  const [recentProjects, setRecentProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState(null);
 
@@ -37,12 +38,13 @@ const Dashboard = () => {
       ]);
 
       const tasks = tasksRes.data;
+      const projects = projectsRes.data;
       const completedTasks = tasks.filter(t => t.status === 'completed').length;
       const activeTasks = tasks.filter(t => t.status === 'todo').length;
       const inProgressTasks = tasks.filter(t => t.status === 'in_progress').length;
 
       setStats({
-        projects: projectsRes.data.length,
+        projects: projects.length,
         tasks: tasks.length,
         employees: employeesRes.data.length,
         completedTasks,
@@ -55,6 +57,12 @@ const Dashboard = () => {
         .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
         .slice(0, 5);
       setRecentTasks(sortedTasks);
+
+      // Sort projects by creation date and get recent ones
+      const sortedProjects = projects
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        .slice(0, 5);
+      setRecentProjects(sortedProjects);
       
       setLastUpdated(new Date());
     } catch (error) {
@@ -69,6 +77,17 @@ const Dashboard = () => {
     if (hour < 12) return 'Good Morning';
     if (hour < 18) return 'Good Afternoon';
     return 'Good Evening';
+  };
+
+  const getProjectStatusColor = (status) => {
+    switch (status) {
+      case 'active': return '#3498db';
+      case 'planning': return '#6b7280';
+      case 'on_hold': return '#f39c12';
+      case 'completed': return '#27ae60';
+      case 'cancelled': return '#e74c3c';
+      default: return '#95a5a6';
+    }
   };
 
   const getTaskStatusColor = (status) => {
@@ -186,6 +205,56 @@ const Dashboard = () => {
       </div>
 
       <div className="dashboard-content">
+        <div className="recent-projects">
+          <div className="section-header">
+            <h2>Recent Projects</h2>
+            <button 
+              className="view-all-btn"
+              onClick={() => window.location.href = '/app/projects'}
+            >
+              View All Projects
+            </button>
+          </div>
+          
+          {recentProjects.length > 0 ? (
+            <div className="project-list">
+              {recentProjects.map(project => (
+                <div key={project._id} className="project-item">
+                  <div className="project-info">
+                    <h4>{project.name}</h4>
+                    <p className="project-description">
+                      {project.description || 'No description provided'}
+                    </p>
+                  </div>
+                  <div className="project-badges">
+                    <span 
+                      className="status-badge" 
+                      style={{ backgroundColor: getProjectStatusColor(project.status) }}
+                    >
+                      {project.status}
+                    </span>
+                    <span className={`priority-badge priority-${project.priority}`}>
+                      {project.priority}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="empty-state">
+              <FiTrendingUp size={48} />
+              <h3>No projects yet</h3>
+              <p>Create your first project to get started!</p>
+              <button 
+                className="btn-primary"
+                onClick={() => window.location.href = '/app/projects'}
+              >
+                Create Project
+              </button>
+            </div>
+          )}
+        </div>
+
         <div className="recent-tasks">
           <div className="section-header">
             <h2>Recent Tasks</h2>

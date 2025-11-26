@@ -10,6 +10,7 @@ const Tasks = () => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
+  const [selectedProjectFilter, setSelectedProjectFilter] = useState('all');
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -198,7 +199,14 @@ const Tasks = () => {
   };
 
   const getTasksByStatus = (status) => {
-    return tasks.filter(task => task.status === status);
+    let filtered = tasks.filter(task => task.status === status);
+    if (selectedProjectFilter !== 'all') {
+      filtered = filtered.filter(task => {
+        const taskProjectId = typeof task.projectId === 'object' ? task.projectId._id : task.projectId;
+        return taskProjectId === selectedProjectFilter;
+      });
+    }
+    return filtered;
   };
 
   const getTaskCount = (status) => {
@@ -242,9 +250,30 @@ const Tasks = () => {
             </span>
           </div>
         </div>
-        <button className="btn-primary" onClick={() => setShowModal(true)}>
-          <FiPlus /> Add Task
-        </button>
+        <div className="header-right">
+          <select 
+            value={selectedProjectFilter} 
+            onChange={(e) => setSelectedProjectFilter(e.target.value)}
+            className="project-filter"
+          >
+            <option value="all">All Projects</option>
+            {projects.map(project => (
+              <option key={project._id} value={project._id}>
+                {project.name}
+              </option>
+            ))}
+          </select>
+          <button
+            className="btn-primary"
+            onClick={async () => {
+              // Refresh lists before opening modal to ensure selects are populated
+              await fetchData();
+              setShowModal(true);
+            }}
+          >
+            <FiPlus /> Add Task
+          </button>
+        </div>
       </div>
 
       <div className="kanban-board">

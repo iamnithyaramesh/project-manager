@@ -1,110 +1,48 @@
 require('dotenv').config();
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
-const multer = require('multer');
-const pdf = require('pdf-parse');
-const mammoth = require('mammoth');
-const fs = require('fs').promises;
 const path = require('path');
-const os = require('os');
+const fs = require('fs');
 
-const jiraRoutes = require('./routes/jira'); // <-- added
-const tasksAiRoutes = require('./routes/tasksAi'); // <-- add this near other routes
+const { connect } = require('./db');
+
+const authRoutes = require('./routes/auth');
+const tasksRoutes = require('./routes/tasks');
+const projectsRoutes = require('./routes/projects');
+const employeesRoutes = require('./routes/employees');
+const documentsRoutes = require('./routes/documents');
 
 const app = express();
-
-// Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
-// Root route
-app.get('/', (req, res) => {
-  res.json({
-    message: 'Project Manager API Server',
-    version: '1.0.0',
-    status: 'running',
-    endpoints: {
-      auth: '/api/auth',
-      projects: '/api/projects',
-      tasks: '/api/tasks',
-      employees: '/api/employees',
-      documents: '/api/document'
-    }
-  });
-});
+// ensure upload temp dir exists
+const uploadDir = path.join(process.cwd(), 'tmp', 'uploads');
+fs.mkdirSync(uploadDir, { recursive: true });
+app.set('uploadDir', uploadDir);
 
-// Routes
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/projects', require('./routes/projects'));
-app.use('/api/tasks', require('./routes/tasks'));
-app.use('/api/employees', require('./routes/employees'));
-app.use('/api/document', require('./routes/document'));
+// API routes
+app.use('/api/auth', authRoutes);
+app.use('/api/tasks', tasksRoutes);
+app.use('/api/projects', projectsRoutes);
+app.use('/api/employees', employeesRoutes);
+app.use('/api/documents', documentsRoutes);
 
-// --- mount jira routes ---
-app.use('/api/jira', jiraRoutes);
-// --- end added ---
+// health
+app.get('/health', (req, res) => res.json({ ok: true, env: process.env.NODE_ENV || 'dev' }));
 
-// --- mount tasks AI routes ---
-// app.use('/api/tasks', tasksAiRoutes);
-// --- end added ---
-
-// MongoDB connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/project-manager')
-.then(() => console.log('✅ MongoDB connected successfully'))
-.catch(err => {
-  console.error('❌ MongoDB connection error:', err.message);
-  console.log('💡 To fix this:');
-  console.log('   1. Install MongoDB: https://www.mongodb.com/try/download/community');
-  console.log('   2. Start MongoDB service: mongod');
-  console.log('   3. Or use MongoDB Atlas cloud service');
-  console.log('   4. Update MONGODB_URI in server/.env file');
-});
-
-// Test endpoint for PDF parsing
-app.get('/api/test-pdf', (req, res) => {
-  res.json({ message: 'PDF parsing test endpoint is working', timestamp: new Date() });
-});
-
-// Legacy document parsing endpoint (for backward compatibility)
-const upload = multer({
-  dest: path.join(os.tmpdir(), 'proj-space-uploads')
-});
-
-app.post('/api/documents/parse', upload.single('file'), async (req, res) => {
-  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-
-  const filePath = req.file.path;
-  const ext = path.extname(req.file.originalname || '').toLowerCase();
-
-  try {
-    let text = '';
-    if (ext === '.pdf') {
-      const data = await fs.readFile(filePath);
-      const parsed = await pdf(data);
-      text = parsed.text || '';
-    } else if (ext === '.docx') {
-      const result = await mammoth.extractRawText({ path: filePath });
-      text = result.value || '';
-    } else if (ext === '.txt' || ext === '.md') {
-      text = await fs.readFile(filePath, 'utf8');
-    } else {
-      return res.status(415).json({ error: 'Unsupported file type. Supported: .pdf, .docx, .txt, .md' });
-    }
-
-    // strip out excessive whitespace
-    text = text.replace(/\r/g, '').replace(/\n{3,}/g, '\n\n').trim();
-
-    return res.json({ text, filename: req.file.originalname, size: req.file.size });
-  } catch (err) {
-    console.error('Parse error:', err);
-    return res.status(500).json({ error: 'Failed to parse file' });
-  } finally {
-    // cleanup
-    try { await fs.unlink(filePath); } catch (e) { /* ignore */ }
-  }
+// centralized error handler
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err && err.stack ? err.stack : err);
+  res.status(err.status || 500).json({ error: err.message || 'Internal error' });
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Document parser server running on http://localhost:${PORT}`));
+connect()
+  .then(() => {
+    app.listen(PORT, () => console.log(`Server listening on http://localhost:${PORT}`));
+  })
+  .catch(err => {
+    console.error('Failed to connect to DB', err);
+    process.exit(1);
+  });

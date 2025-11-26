@@ -11,11 +11,9 @@ exports.createIssueFromTask = async (req, res) => {
 
     const summary = `${task.title}`;
     const description = task.description || '';
-    const fields = {};
 
-    const jiraIssue = await createIssue({ projectKey, summary, description, issueType: 'Task', fields });
+    const jiraIssue = await createIssue({ projectKey, summary, description, issueType: 'Task' });
 
-    // persist mapping on Task (ensure fields exist in model)
     task.jiraIssueKey = jiraIssue.key;
     task.jiraUrl = jiraIssue.self || `${process.env.JIRA_BASE_URL}/browse/${jiraIssue.key}`;
     task.jiraSyncedAt = new Date();
@@ -23,19 +21,19 @@ exports.createIssueFromTask = async (req, res) => {
 
     res.json({ jira: jiraIssue, task });
   } catch (err) {
-    console.error('createIssueFromTask', err);
-    res.status(500).json({ error: err.message || 'Jira integration error' });
+    console.error('Jira create error', err);
+    res.status(500).json({ error: err.message || 'Jira error' });
   }
 };
 
-exports.getIssue = async (req, res) => {
+exports.fetchIssue = async (req, res) => {
   try {
     const { key } = req.params;
     if (!key) return res.status(400).json({ error: 'issue key required' });
     const issue = await getIssue(key);
     res.json(issue);
   } catch (err) {
-    console.error('getIssue', err);
+    console.error('Jira fetch error', err);
     res.status(500).json({ error: err.message || 'Jira fetch error' });
   }
 };
