@@ -11,6 +11,9 @@ const tasksRoutes = require('./routes/tasks');
 const projectsRoutes = require('./routes/projects');
 const employeesRoutes = require('./routes/employees');
 const documentsRoutes = require('./routes/documents');
+const documentRoutes = require('./routes/document');
+const jiraRoutes = require('./routes/jira');
+const tasksAiRoutes = require('./routes/tasksAi');
 
 const app = express();
 app.use(cors());
@@ -27,6 +30,9 @@ app.use('/api/tasks', tasksRoutes);
 app.use('/api/projects', projectsRoutes);
 app.use('/api/employees', employeesRoutes);
 app.use('/api/documents', documentsRoutes);
+app.use('/api/document', documentRoutes);
+app.use('/api/jira', jiraRoutes);
+app.use('/api/tasks-ai', tasksAiRoutes);
 
 // health
 app.get('/health', (req, res) => res.json({ ok: true, env: process.env.NODE_ENV || 'dev' }));
